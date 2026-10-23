@@ -1,5 +1,7 @@
 # omarchy-sysstats
 
+> Fork of [RohitKaushal7/omarchy-sysstats](https://github.com/RohitKaushal7/omarchy-sysstats): busy GPU/NPU shown as a badge dot instead of a line, GPU alert at 80% by default, and a multi-line tooltip.
+
 **Every chip, one glance.** CPU, GPU, NPU, memory and disk for the
 [Omarchy](https://omarchy.org/) shell bar: two quiet meters up top, and the
 whole machine one click away.
@@ -17,7 +19,7 @@ laptops have a GPU and an NPU doing real work, and now you can see it.
 - **One graph for every chip.** CPU as a filled area, GPU dashed and NPU
   dotted on top, in your theme's colours.
 - **A bar icon that tells you when it matters.** CPU and memory meters, plus a
-  thin line above them when the GPU or NPU gets busy.
+  badge dot in the corner when the GPU or NPU gets busy.
 - **Cheap.** About 14 ms of CPU every two seconds, no root, no daemons, and
   nothing written to disk.
 
@@ -25,15 +27,15 @@ laptops have a GPU and an NPU doing real work, and now you can see it.
 
 Two level meters, CPU on the left and memory on the right, and no text.
 Numbers on a 26px bar compete with the clock and rarely match the size of
-anything around them, so the figures live in the panel. Hover for a one-line
-summary.
+anything around them, so the figures live in the panel. Hover for a summary,
+one figure per line.
 
-A 2px line appears over the meters while a chip is busy: cyan for the GPU,
-magenta for the NPU, split one segment per meter when both are. Busy means
-above a limit you set ([`gpuAlertAt`, `npuAlertAt`](#settings)). The NPU's
-defaults to any activity at all, since nothing on a desktop uses it by
-accident. The line sits in the bar's spare height, so the meters never move
-when it comes and goes.
+A badge dot appears in the widget's top-right corner while a chip is busy,
+like the notification centre's unread dot: cyan for the GPU, magenta for the
+NPU, side by side when both are. Busy means above a limit you set
+([`gpuAlertAt`, `npuAlertAt`](#settings)). The NPU's defaults to any activity
+at all, since nothing on a desktop uses it by accident. The dot overlays the
+button, so the meters never move when it comes and goes.
 
 The meters fill along a gamma curve rather than a straight line. Idle machines
 sit in the bottom fifth of the scale, where a 13px track cannot separate 10%
@@ -88,7 +90,7 @@ chip's maximum. Desktop compositing keeps a GPU awake much of the time with
 many tiny jobs at its floor clock; video, games and compute make its firmware
 raise the clock. Work tells the two apart where load alone cannot. On a
 120Hz HiDPI laptop panel, compositing alone can reach about half the GPU's
-work, so raise `gpuAlertAt` there if the line shows too often.
+work, so raise `gpuAlertAt` there if the dot shows too often.
 
 A GPU that has been powered down is never read. On a discrete GPU, reading it
 would wake it and cost more battery than the widget is worth.
@@ -96,13 +98,13 @@ would wake it and cost more battery than the widget is worth.
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/RohitKaushal7/omarchy-sysstats.git --enable
+omarchy plugin add https://github.com/higorhgon/omarchy-sysstats.git --enable
 ```
 
 Then place it wherever you like on the bar:
 
 ```bash
-omarchy bar move dev.reuk.sysstats --section right --before omarchy.power
+omarchy bar move higorhgon.sysstats --section right --before omarchy.power
 ```
 
 Plugins run as unsandboxed code inside `omarchy-shell`. Read `Panel.qml` before
@@ -111,10 +113,10 @@ enabling it. It is a single file with no build step.
 ## Remove
 
 ```bash
-omarchy plugin remove dev.reuk.sysstats
+omarchy plugin remove higorhgon.sysstats
 ```
 
-That deletes `~/.config/omarchy/plugins/dev.reuk.sysstats/` and drops the widget
+That deletes `~/.config/omarchy/plugins/higorhgon.sysstats/` and drops the widget
 from the bar. Nothing else is left behind: the plugin writes no files, no state
 and no configuration of its own, and it installs no packages or services. If you
 added a layout entry by hand, remove it from `bar.layout` in
@@ -125,14 +127,14 @@ added a layout entry by hand, remove it from `bar.layout` in
 Change them from the bar's widget settings, or with `omarchy bar set`:
 
 ```bash
-omarchy bar set dev.reuk.sysstats gpuAlertAt 65 --json
-omarchy bar set dev.reuk.sysstats mount /home
+omarchy bar set higorhgon.sysstats gpuAlertAt 65 --json
+omarchy bar set higorhgon.sysstats mount /home
 ```
 
 They live on the widget's entry in `~/.config/omarchy/shell.json`:
 
 ```json
-{ "id": "dev.reuk.sysstats", "interval": 2, "mount": "/", "warnAt": 60, "criticalAt": 85, "gpuAlertAt": 50, "npuAlertAt": 0 }
+{ "id": "higorhgon.sysstats", "interval": 2, "mount": "/", "warnAt": 60, "criticalAt": 85, "gpuAlertAt": 80, "npuAlertAt": 0 }
 ```
 
 | Key | Default | What it does |
@@ -141,8 +143,8 @@ They live on the widget's entry in `~/.config/omarchy/shell.json`:
 | `mount` | `"/"` | Mount point reported in the capacity row |
 | `warnAt` | `60` | Percent at which meters start tinting |
 | `criticalAt` | `85` | Percent at which meters reach the urgent colour |
-| `gpuAlertAt` | `50` | Show the bar's GPU line while GPU work is above this percent |
-| `npuAlertAt` | `0` | Show the bar's NPU line while NPU load is above this percent. `0` marks any activity |
+| `gpuAlertAt` | `80` | Show the bar's GPU dot while GPU work is above this percent |
+| `npuAlertAt` | `0` | Show the bar's NPU dot while NPU load is above this percent. `0` marks any activity |
 
 ## What it reads, and what it does not
 

@@ -34,8 +34,8 @@ import qs.Ui
 
 Panel {
   id: root
-  moduleName: "dev.reuk.sysstats"
-  ipcTarget: "dev.reuk.sysstats"
+  moduleName: "higorhgon.sysstats"
+  ipcTarget: "higorhgon.sysstats"
 
   readonly property int refreshMs: Math.max(1, setting("interval", 2)) * 1000
   readonly property real warnAt: Math.max(0, Math.min(1, setting("warnAt", 60) / 100))
@@ -44,7 +44,7 @@ Panel {
   // Bar alert limits, in percent. A mark shows while a device's work (see
   // accelWork) is above its limit, and nothing else. NPU defaults to 0:
   // any NPU work at all is worth a mark.
-  readonly property real gpuAlertAt: Math.max(0, Math.min(100, setting("gpuAlertAt", 50)))
+  readonly property real gpuAlertAt: Math.max(0, Math.min(100, setting("gpuAlertAt", 80)))
   readonly property real npuAlertAt: Math.max(0, Math.min(100, setting("npuAlertAt", 0)))
   property bool gpuAlert: false
   property bool npuAlert: false
@@ -712,13 +712,13 @@ Panel {
     bar: root.bar
     labelVisible: false
     hasVisualContent: true
-    tooltipText: "CPU " + root.cpuPercentText + "   ·   RAM " + root.memUsedGb.toFixed(1) + " / " + root.memTotalGb.toFixed(1) + " GB"
+    tooltipText: "CPU " + root.cpuPercentText + "\nRAM " + root.memUsedGb.toFixed(1) + " / " + root.memTotalGb.toFixed(1) + " GB"
       + root.accelIds.map(function(id) {
           var kind = root.accelKind(id)
           var over = kind === "gpu" ? root.gpuAlert : root.npuAlert
           var limit = kind === "gpu" ? root.gpuAlertAt : root.npuAlertAt
           var work = Math.round(Math.max(0, root.accelWork(root.accelState[id])))
-          return "   ·   " + root.accelLabel(id) + " " + root.accelPercentText(id)
+          return "\n" + root.accelLabel(id) + " " + root.accelPercentText(id)
             + (over ? " (work " + work + "% > " + limit + "%)" : "")
         }).join("")
     fixedWidth: vertical ? -1 : root.meterWidth * 2 + root.meterGap + Style.space(14)
@@ -737,53 +737,18 @@ Panel {
       Meter { fraction: root.memFraction; settleMs: 320 }
     }
 
-    // Alert line over the meters (to their left on a vertical bar),
-    // anchored to them rather than laid out with them: the meters stay
-    // centred in the button whether or not a mark is showing, and the line
-    // sits in the bar's spare height.
-    AlertBaseline {
-      vertical: button.vertical
-      length: button.vertical ? meterGrid.height : meterGrid.width
-      anchors.bottom: button.vertical ? undefined : meterGrid.top
-      anchors.horizontalCenter: button.vertical ? undefined : meterGrid.horizontalCenter
-      anchors.right: button.vertical ? meterGrid.left : undefined
-      anchors.verticalCenter: button.vertical ? meterGrid.verticalCenter : undefined
-      anchors.bottomMargin: Style.space(3)
+    // Alert dots in the button's top-right corner, the same badge the
+    // notification centre uses for unread items: GPU dot in the GPU trace
+    // colour, NPU dot in the NPU's, side by side when both are busy.
+    Row {
+      anchors.right: button.right
       anchors.rightMargin: Style.space(3)
-    }
-  }
+      anchors.top: button.top
+      anchors.topMargin: Style.space(5)
+      spacing: Style.space(2)
 
-  // GPU mark in the GPU trace colour, NPU mark in the NPU's. One alone
-  // spans the whole meter pair; both split it, GPU first, one segment
-  // over each meter.
-  component AlertBaseline: Item {
-    id: baseline
-
-    property bool vertical: false
-    property real length: 0
-    readonly property real thickness: 2
-    readonly property bool both: root.gpuAlert && root.npuAlert
-    readonly property real half: (length - root.meterGap) / 2
-
-    width: vertical ? thickness : length
-    height: vertical ? length : thickness
-
-    AlertSegment {
-      vertical: baseline.vertical
-      thickness: baseline.thickness
-      on: root.gpuAlert
-      color: root.gpuTint
-      start: 0
-      span: baseline.both ? baseline.half : baseline.length
-    }
-
-    AlertSegment {
-      vertical: baseline.vertical
-      thickness: baseline.thickness
-      on: root.npuAlert
-      color: root.npuTint
-      start: baseline.both ? baseline.length - baseline.half : 0
-      span: baseline.both ? baseline.half : baseline.length
+      AlertDot { on: root.gpuAlert; color: root.gpuTint }
+      AlertDot { on: root.npuAlert; color: root.npuTint }
     }
   }
 
@@ -1520,24 +1485,14 @@ Panel {
     height: 0
   }
 
-  // One coloured run of the alert baseline, positioned along its axis.
-  component AlertSegment: Rectangle {
-    property bool vertical: false
-    property real thickness: 2
+  // One alert badge dot; collapses out of the Row while off.
+  component AlertDot: Rectangle {
     property bool on: false
-    property real start: 0
-    property real span: 0
 
-    x: vertical ? 0 : start
-    y: vertical ? start : 0
-    width: vertical ? thickness : span
-    height: vertical ? span : thickness
-    radius: thickness / 2
-    opacity: on ? 1 : 0
-
-    Behavior on opacity { NumberAnimation { duration: 200 } }
-    Behavior on start { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-    Behavior on span { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    visible: on
+    width: Style.space(6)
+    height: width
+    radius: width / 2
   }
 
   // Section header with a headline figure on the trailing edge. Reuses

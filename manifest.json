@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "dev.reuk.sysstats",
+  "id": "higorhgon.sysstats",
   "name": "System stats",
   "version": "1.2.0",
   "author": "Rohit Kaushal",
@@ -23,7 +23,7 @@
       "warnAt": 60,
       "criticalAt": 85,
       "mount": "/",
-      "gpuAlertAt": 50,
+      "gpuAlertAt": 80,
       "npuAlertAt": 0
     },
     "schema": [
