@@ -49,6 +49,8 @@ Panel {
   property bool gpuAlert: false
   property bool npuAlert: false
   readonly property int historyLength: 48
+  // Readings averaged for a GPU that reports an instantaneous busy percent.
+  readonly property int busyWindow: 5
 
   readonly property color ink: bar ? bar.foreground : Color.foreground
 
@@ -276,7 +278,13 @@ Panel {
         }
       } else if (r[2] === "busy") {
         // gpu <id> busy <percent>
-        s.busy = Math.max(0, Math.min(1, (parseFloat(r[3]) || 0) / 100))
+        // amdgpu samples a window far shorter than the tick, so a desktop
+        // doing light compositing reads as 0% or ~95% at random. The mean of
+        // the last few readings is what the gauge, trace and alert show.
+        var recent = (prev[id + "/busy"] || []).slice(1 - root.busyWindow)
+        recent.push(Math.max(0, Math.min(1, (parseFloat(r[3]) || 0) / 100)))
+        next[id + "/busy"] = recent
+        s.busy = recent.reduce(function(sum, v) { return sum + v }, 0) / recent.length
       }
     }
 
